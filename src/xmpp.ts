@@ -1,6 +1,7 @@
 import { take, tap, map } from 'rxjs/operators'
 import * as XMPP from 'stanza'
 import { Subject, BehaviorSubject, ReplaySubject } from 'rxjs'
+//@ts-ignore
 import Debug from 'debug'
 
 const debug = Debug('XMPP-CLIENT')
@@ -55,6 +56,16 @@ enum XMPPConnectionStatus {
   'error' = 'error'
 }
 
+export interface ConnectOptions {
+  jid?: string
+  password?: string
+  server?: string
+  transports: {
+    websocket: string | false
+    bosh: string | false
+  }
+}
+
 // Public observables
 const _onMessage$ = new Subject<XMPP.Stanzas.ReceivedMessage>()
 export const onMessage$ = () => _onMessage$.asObservable()
@@ -72,18 +83,21 @@ let connectionStatus: XMPPConnectionStatus = XMPPConnectionStatus.disconnected
 
 // Public functions
 export function connect({
-  jid = process.env.XMPP_USERNAME || 'test',
-  password = process.env.XMPP_PASSWORD || 'password'
-}): void {
+  jid = process.env.XMPP_USERNAME,
+  password = process.env.XMPP_PASSWORD,
+  server = process.env.XMPP_DOMAIN,
+  transports = {
+    websocket: process.env.XMPP_TRANSPORTS_WS || false,
+    bosh: process.env.XMPP_TRANSPORTS_BOSH || false
+  }
+}: ConnectOptions): void {
   process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0'
   debug(`Initializing XMPP client instance...`)
   client$.next(XMPP.createClient({
     jid,
+    server,
     password,
-    transports: {
-      websocket: 'wss://example.com:5281/xmpp-websocket',
-      bosh: 'https://example.com:5281/http-bind'
-    }
+    transports
   }))
   setupListeners()
   connectToServer()
@@ -128,3 +142,12 @@ function connectToServer() {
   setConnectionStatus(XMPPConnectionStatus.connecting)
   client$.pipe(take(1)).subscribe(c => c.connect())
 }
+
+connect({ 
+  jid: 'test',
+  password: 'password',
+  transports: {
+    websocket: 'ws://localhost:5281/xmpp-websocket',
+    bosh: false
+  }
+})

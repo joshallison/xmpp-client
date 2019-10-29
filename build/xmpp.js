@@ -21,6 +21,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const operators_1 = require("rxjs/operators");
 const XMPP = __importStar(require("stanza"));
 const rxjs_1 = require("rxjs");
+//@ts-ignore
 const debug_1 = __importDefault(require("debug"));
 const debug = debug_1.default('XMPP-CLIENT');
 if (XMPP instanceof Function == undefined) {
@@ -72,16 +73,17 @@ let _status$;
 exports.onConnectionChange$ = () => _status$.asObservable();
 let connectionStatus = XMPPConnectionStatus.disconnected;
 // Public functions
-function connect({ jid = process.env.XMPP_USERNAME || 'test', password = process.env.XMPP_PASSWORD || 'password' }) {
+function connect({ jid = process.env.XMPP_USERNAME, password = process.env.XMPP_PASSWORD, server = process.env.XMPP_DOMAIN, transports = {
+    websocket: process.env.XMPP_TRANSPORTS_WS || false,
+    bosh: process.env.XMPP_TRANSPORTS_BOSH || false
+} }) {
     process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
     debug(`Initializing XMPP client instance...`);
     client$.next(XMPP.createClient({
         jid,
+        server,
         password,
-        transports: {
-            websocket: 'wss://example.com:5281/xmpp-websocket',
-            bosh: 'https://example.com:5281/http-bind'
-        }
+        transports
     }));
     setupListeners();
     connectToServer();
@@ -125,3 +127,11 @@ function connectToServer() {
     setConnectionStatus(XMPPConnectionStatus.connecting);
     client$.pipe(operators_1.take(1)).subscribe(c => c.connect());
 }
+connect({
+    jid: 'test',
+    password: 'password',
+    transports: {
+        websocket: 'ws://localhost:5281/xmpp-websocket',
+        bosh: false
+    }
+});

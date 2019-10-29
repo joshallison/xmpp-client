@@ -27,14 +27,20 @@ export interface XMPPConnectionOptions {
 }
 export declare type Message = XMPP.Stanzas.Message;
 export declare type Delay = XMPP.Stanzas.Delay;
+export interface ConnectOptions {
+    jid?: string;
+    password?: string;
+    server?: string;
+    transports: {
+        websocket: string | false;
+        bosh: string | false;
+    };
+}
 export declare const onMessage$: () => import("rxjs").Observable<XMPP.Stanzas.ReceivedMessage>;
 export declare const onIQ$: () => import("rxjs").Observable<any>;
 export declare const onPresence$: () => import("rxjs").Observable<any>;
 export declare const onConnectionChange$: () => import("rxjs").Observable<any>;
-export declare function connect({ jid, password }: {
-    jid?: string;
-    password?: string;
-}): void;
+export declare function connect({ jid, password, server, transports }: ConnectOptions): void;
 export declare function disconnect(): import("rxjs").Subscription;
 export declare function send(message: Message): import("rxjs").Observable<{
     result: string;
